@@ -9,6 +9,13 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" as="style" crossorigin onload="this.onload=null;this.rel='stylesheet'">
     <link rel="shortcut icon" href="<?= base_url('assets/images/logo/logo.svg') ?>" type="image/x-icon">
+    
+    <!-- SEO -->
+    <meta name="description" content="Site oficial da turma de Informática 3 (2024-2026) da EEEP Professora Elsa Maria Porto Costa Lima para gerenciamento de caixa.">
+    <meta name="keywords" content="Informática, Caixa, Gerenciamento, Turma">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Pedro Nícolas Gomes de Souza">
+    <meta name="application-name" content="INFOR-3 Caixa 2026">
         
     <!-- PWA -->
     <meta name="theme-color" content="#0185c6">
