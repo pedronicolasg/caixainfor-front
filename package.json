@@ -1,0 +1,12 @@
+{
+  "name": "caixainfor-front",
+  "private": true,
+  "scripts": {
+    "dev": "tailwindcss -i app/Resources/css/app.css -o public/assets/app.css --watch",
+    "build": "tailwindcss -i app/Resources/css/app.css -o public/assets/app.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "tailwindcss": "^4.1.18"
+  }
+}
