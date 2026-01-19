@@ -3,6 +3,8 @@
 
 @source "../../Views/**/*.php";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
     --color-primary: oklch(0.5894 0.137 240.95);
     --color-alt: oklch(0.212 0.0559 259.53);

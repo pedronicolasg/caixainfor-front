@@ -31,23 +31,43 @@
             display: none !important;
         }
     </style>
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const shouldUseDark = theme === 'dark' || (!theme && prefersDark);
+            
+            if (shouldUseDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 via-white to-gray-50 min-h-screen flex flex-col">
+<body class="bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen flex flex-col">
     <?php
     $showNavbar = isset($showNavbar) ? $showNavbar : (session()->get('access_token') ? true : false);
     if ($showNavbar):
         ?>
-        <div class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
+        <div class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-md">
             <div class="flex items-center justify-between px-4 py-3">
                 <a href="<?= base_url('/dashboard') ?>" class="flex items-center space-x-2">
                     <img src="<?= base_url('assets/images/logo/logo.svg') ?>" alt="CaixaInf Logo" class="w-8 h-8">
-                    <span class="text-xl font-bold font-display bg-primary bg-clip-text text-transparent">Caixa 2026</span>
+                    <span class="text-xl font-bold font-display bg-primary bg-clip-text text-transparent dark:text-white">Caixa 2026</span>
                 </a>
-                <button id="mobileMenuBtn"
-                    class="p-2 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <i class="fa-solid fa-bars text-[1.5rem] leading-none" aria-hidden="true"></i>
-                </button>
+                <div class="flex items-center space-x-2">
+                    <button id="themeToggleMobile"
+                        class="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                        aria-label="Alternar tema">
+                        <i id="themeIconMobile" class="fa-solid fa-moon text-[1.25rem] leading-none" aria-hidden="true"></i>
+                    </button>
+                    <button id="mobileMenuBtn"
+                        class="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <i class="fa-solid fa-bars text-[1.5rem] leading-none" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -107,6 +127,11 @@
                                 <?= esc(explode('@', $userEmail ?? 'Usuário')[0]) ?>
                             </p>
                         </div>
+                        <button id="themeToggle"
+                            class="p-2 rounded-lg text-white hover:bg-white/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/20"
+                            aria-label="Alternar tema">
+                            <i id="themeIcon" class="fa-solid fa-moon text-[1.25rem] leading-none" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <a href="<?= base_url('/auth/logout') ?>"
                         class="flex items-center space-x-3 px-4 py-3 rounded-lg text-white bg-red-500/20 hover:bg-red-500/30 transition-all duration-200 group">
@@ -118,12 +143,12 @@
         </div>
 
         <div id="overlay"
-            class="fixed inset-0 bg-black/50 z-30 opacity-0 invisible transition-opacity duration-300 lg:hidden"></div>
+            class="fixed inset-0 bg-black/50 dark:bg-black/70 z-30 opacity-0 invisible transition-opacity duration-300 lg:hidden"></div>
 
         <div class="lg:pl-64 flex flex-col flex-1">
             <div class="fixed top-20 lg:top-4 right-4 z-50 space-y-2 max-w-md w-full px-4 lg:px-0">
                 <?php if (session()->getFlashdata('success')): ?>
-                    <div class="bg-green-50 border-l-4 border-green-500 text-green-800 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right"
+                    <div class="bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 dark:border-green-400 text-green-800 dark:text-green-200 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right"
                         role="alert">
                         <div class="flex items-center">
                             <i class="fa-solid fa-circle-check mr-2 text-[1.25rem] leading-none" aria-hidden="true"></i>
@@ -133,7 +158,7 @@
                 <?php endif; ?>
 
                 <?php if (session()->getFlashdata('error')): ?>
-                    <div class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right"
+                    <div class="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 dark:border-red-400 text-red-800 dark:text-red-200 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right"
                         role="alert">
                         <div class="flex items-center">
                             <i class="fa-solid fa-circle-xmark mr-2 text-[1.25rem] leading-none" aria-hidden="true"></i>
@@ -149,17 +174,17 @@
                 </div>
             </main>
 
-            <footer class="bg-white border-t border-gray-200 mt-auto">
+            <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
                 <div class="px-4 py-6 lg:px-8">
                     <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
                         <div class="flex items-center space-x-3">
                             <img src="<?= base_url('assets/images/logo/logo.svg') ?>" alt="CaixaInf Logo" class="w-7 h-7">
-                            <p class="text-sm text-gray-600">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
                                 © 2026 <a href="https://linktr.ee/pedronicolasg" target="_blank" rel="noopener noreferrer"
-                                    class="text-primary hover:text-blue-700 font-medium font-display transition-colors duration-200">Pedro
+                                    class="text-primary dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium font-display transition-colors duration-200">Pedro
                                     Nícolas Gomes de Souza</a>. Licenciado sob <a href="https://github.com/pedronicolasg/caixainfor-front/blob/main/LICENSE"
                                     target="_blank" rel="noopener noreferrer"
-                                    class="text-primary hover:text-blue-700 font-medium font-display transition-colors duration-200">MIT</a>.
+                                    class="text-primary dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium font-display transition-colors duration-200">MIT</a>.
                             </p>
                         </div>
                     </div>
@@ -169,7 +194,7 @@
     <?php else: ?>
         <div class="fixed top-4 right-4 z-50 space-y-2 max-w-md w-full px-4">
             <?php if (session()->getFlashdata('success')): ?>
-                <div class="bg-green-50 border-l-4 border-green-500 text-green-800 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right"
+                <div class="bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 dark:border-green-400 text-green-800 dark:text-green-200 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right"
                     role="alert">
                     <div class="flex items-center">
                         <i class="fa-solid fa-circle-check mr-2 text-[1.25rem] leading-none" aria-hidden="true"></i>
@@ -179,7 +204,7 @@
             <?php endif; ?>
 
             <?php if (session()->getFlashdata('error')): ?>
-                <div class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right"
+                <div class="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 dark:border-red-400 text-red-800 dark:text-red-200 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right"
                     role="alert">
                     <div class="flex items-center">
                         <i class="fa-solid fa-circle-xmark mr-2 text-[1.25rem] leading-none" aria-hidden="true"></i>
@@ -195,19 +220,19 @@
             </div>
         </main>
 
-        <footer class="bg-white border-t border-gray-200 mt-auto w-full">
+        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto w-full">
             <div class="px-4 py-6">
                 <div class="flex flex-col items-center justify-center space-y-3">
                     <div class="flex items-center space-x-3">
                         <img src="<?= base_url('assets/images/logo/logo.svg') ?>" alt="CaixaInf Logo" class="w-7 h-7">
-                        <span class="text-lg font-bold font-display text-gray-900">Caixa 2026</span>
+                        <span class="text-lg font-bold font-display text-gray-900 dark:text-white">Caixa 2026</span>
                     </div>
-                    <p class="text-sm text-gray-600 text-center">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
                         © 2026 <a href="https://linktr.ee/pedronicolasg" target="_blank" rel="noopener noreferrer"
-                            class="text-primary hover:text-blue-700 font-medium font-display transition-colors duration-200">Pedro
+                            class="text-primary dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium font-display transition-colors duration-200">Pedro
                             Nícolas Gomes de Souza</a>. Licenciado sob <a href="https://github.com/pedronicolasg/caixainfor-front/blob/main/LICENSE"
                             target="_blank" rel="noopener noreferrer"
-                            class="text-primary hover:text-blue-700 font-medium font-display transition-colors duration-200">MIT</a>.
+                            class="text-primary dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium font-display transition-colors duration-200">MIT</a>.
                     </p>
                 </div>
             </div>
@@ -233,7 +258,63 @@
             });
         }
 
+        function getTheme() {
+            const stored = localStorage.getItem('theme');
+            if (stored) return stored;
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function setTheme(theme) {
+            localStorage.setItem('theme', theme);
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            updateThemeIcon();
+        }
+
+        function toggleTheme() {
+            const currentTheme = getTheme();
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        }
+
+        function updateThemeIcon() {
+            const themeIcon = document.getElementById('themeIcon');
+            const themeIconMobile = document.getElementById('themeIconMobile');
+            const isDark = document.documentElement.classList.contains('dark');
+            const iconClass = isDark 
+                ? 'fa-solid fa-sun text-[1.25rem] leading-none' 
+                : 'fa-solid fa-moon text-[1.25rem] leading-none';
+            
+            if (themeIcon) {
+                themeIcon.className = iconClass;
+            }
+            if (themeIconMobile) {
+                themeIconMobile.className = iconClass;
+            }
+        }
+
+        setTheme(getTheme());
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                setTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+
+        const themeToggle = document.getElementById('themeToggle');
+        const themeToggleMobile = document.getElementById('themeToggleMobile');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', toggleTheme);
+        }
+        if (themeToggleMobile) {
+            themeToggleMobile.addEventListener('click', toggleTheme);
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
+            updateThemeIcon();
+            
             const alerts = document.querySelectorAll('[role="alert"]');
             alerts.forEach(alert => {
                 setTimeout(() => {
