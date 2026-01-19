@@ -5,10 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title ?? 'INFORMÁTICA 3 - Caixa 2026') ?></title>
+    <link rel="manifest" href="<?= base_url('manifest.json') ?>" />
     <link rel="stylesheet" href="<?= base_url('assets/app.css') ?>">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" as="style" crossorigin onload="this.onload=null;this.rel='stylesheet'">
     <link rel="shortcut icon" href="<?= base_url('assets/images/logo/logo.svg') ?>" type="image/x-icon">
+    <link rel="apple-touch-icon" href="<?= base_url('assets/images/icons/apple-touch-icon.png') ?>" />
+
     
     <!-- SEO -->
     <meta name="description" content="Site oficial da turma de Informática 3 (2024-2026) da EEEP Professora Elsa Maria Porto Costa Lima para gerenciamento de caixa.">

@@ -1,0 +1,39 @@
+{
+  "name": "INFOR-3 Caixa 2026",
+  "short_name": "INFOR-3",
+  "description": "Aplicação oficial da INFOR-3 para controle e gestão do caixa 2026.",
+  "id": "/?app=caixainfor",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "portrait-primary",
+  "theme_color": "#0185c6",
+  "background_color": "#ffffff",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/assets/images/icons/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/images/icons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/images/screenshots/dashboard-1920x1080.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["finance", "productivity", "education"],
+  "prefer_related_applications": false
+}

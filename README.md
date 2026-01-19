@@ -1,5 +1,7 @@
 # Caixa INFOR - Frontend
 
+<img src="public/assets/images/screenshots/dashboard-1920x1080.png"/>
+
 Frontend web para gerenciamento do caixa financeiro da turma [**INFOR 3 (2024–2026)**](https://www.instagram.com/informatica3_ep/), consumindo uma [**API RESTful**](https://github.com/pedronicolasg/caixainfor-api). Construído com **CodeIgniter 4** e **TailwindCSS v4**.
 
 ## Stack
