@@ -15,11 +15,12 @@ class DashboardController extends BaseController
         $this->apiService = new ApiService();
         $this->session = \Config\Services::session();
     }
-    
+
     private function checkAuth(): ?RedirectResponse
     {
         $redirect = $this->ensureValidSessionToken();
-        if ($redirect) return $redirect;
+        if ($redirect)
+            return $redirect;
 
         $token = $this->session->get('access_token');
         $this->apiService->setToken($token);
@@ -35,7 +36,8 @@ class DashboardController extends BaseController
 
         $summaryResponse = $this->apiService->getSummary('month');
         $unauthorizedRedirect = $this->logoutIfUnauthorizedApiResponse($summaryResponse);
-        if ($unauthorizedRedirect) return $unauthorizedRedirect;
+        if ($unauthorizedRedirect)
+            return $unauthorizedRedirect;
         $summary = $summaryResponse['success'] ? $summaryResponse['data'] : null;
 
         $transactionsResponse = $this->apiService->getTransactions([
@@ -45,7 +47,8 @@ class DashboardController extends BaseController
             'order' => 'desc',
         ]);
         $unauthorizedRedirect = $this->logoutIfUnauthorizedApiResponse($transactionsResponse);
-        if ($unauthorizedRedirect) return $unauthorizedRedirect;
+        if ($unauthorizedRedirect)
+            return $unauthorizedRedirect;
         $transactions = $transactionsResponse['success'] ? ($transactionsResponse['data']['data'] ?? []) : [];
 
         $data = [

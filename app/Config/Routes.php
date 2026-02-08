@@ -22,6 +22,8 @@ $routes->group('', ['namespace' => 'App\Controllers'], function ($routes) {
     
     $routes->group('transactions', function ($routes) {
         $routes->get('/', 'TransactionController::index');
+        $routes->get('export/excel', 'TransactionController::exportExcel');
+        $routes->get('export/pdf', 'TransactionController::exportPdf');
         $routes->get('create', 'TransactionController::create');
         $routes->post('/', 'TransactionController::store');
         $routes->get('(:segment)/edit', 'TransactionController::edit/$1');
