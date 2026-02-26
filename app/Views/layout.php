@@ -262,7 +262,8 @@
             </div>
         </footer>
     <?php endif; ?>
-
+    
+    <script src="https://api.dashboard.instatus.com/widget?host=epelsaportoinfor3.instatus.com&code=6a8af30a&locale=en"> </script>
     <script>
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebar = document.getElementById('sidebar');
