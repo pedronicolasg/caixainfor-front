@@ -220,7 +220,7 @@ class ApiService
 
     public function deleteVault(int $id, string $mode): array
     {
-        return $this->post("vault/{$id}/delete", [
+        return $this->post("vaults/{$id}/delete", [
             'mode' => $mode,
         ]);
     }
