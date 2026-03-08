@@ -91,6 +91,10 @@
                         </option>
                         <option value="outcome" <?= ($filters['type'] ?? '') === 'outcome' ? 'selected' : '' ?>>Saída
                         </option>
+                        <option value="deposit" <?= ($filters['type'] ?? '') === 'deposit' ? 'selected' : '' ?>>
+                            Depósito em caixinha</option>
+                        <option value="withdraw" <?= ($filters['type'] ?? '') === 'withdraw' ? 'selected' : '' ?>>
+                            Resgate de caixinha</option>
                     </select>
                 </div>
 
@@ -168,36 +172,92 @@
                 <?php foreach ($transactions as $transaction): ?>
                     <div class="p-4 hover:bg-gray-50/80 dark:hover:bg-gray-700/30 transition-colors">
                         <div class="flex items-start justify-between gap-3 mb-3">
-                            <div class="flex items-center gap-3 min-w-0 flex-1">
-                                <div
-                                    class="w-10 h-10 rounded-xl bg-primary/10 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-primary dark:text-blue-400 text-sm font-semibold">
-                                    <?= strtoupper(substr($transaction['name'], 0, 1)) ?>
-                                </div>
+                                    <?php
+                                    $uiType = $transaction['ui_type'] ?? $transaction['type'] ?? '';
+                                    $isInternal = in_array($uiType, ['deposit', 'withdraw', 'transfer'], true);
+                                    ?>
+                                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                                        <div
+                                            class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-semibold
+                                            <?= $isInternal ? 'bg-primary/10 dark:bg-blue-900/30 text-primary dark:text-blue-400' : 'bg-primary/10 dark:bg-blue-900/30 text-primary dark:text-blue-400' ?>">
+                                            <?php if ($isInternal): ?>
+                                                <i class="fa-solid fa-piggy-bank text-lg" aria-hidden="true"></i>
+                                            <?php else: ?>
+                                                <?= strtoupper(substr($transaction['name'], 0, 1)) ?>
+                                            <?php endif; ?>
+                                        </div>
                                 <div class="min-w-0">
                                     <p class="font-medium text-gray-900 dark:text-white truncate">
-                                        <?= esc($transaction['title']) ?>
+                                            <?= esc($transaction['ui_title'] ?? $transaction['title']) ?>
                                     </p>
                                     <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                        <?= esc($transaction['name']) ?>
+                                                <?= esc($transaction['ui_name'] ?? $transaction['name']) ?>
                                     </p>
                                 </div>
                             </div>
                             <span
-                                class="px-2.5 py-1 text-xs font-semibold rounded-lg shrink-0 <?= $transaction['type'] === 'income' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' ?>"><?= $transaction['type'] === 'income' ? 'Entrada' : 'Saída' ?></span>
+                                <?php
+                                $badgeLabel = 'Outro';
+                                $badgeClasses = 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+                                if ($uiType === 'income') {
+                                    $badgeLabel = 'Entrada';
+                                    $badgeClasses = 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300';
+                                } elseif ($uiType === 'outcome') {
+                                    $badgeLabel = 'Saída';
+                                    $badgeClasses = 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+                                } elseif ($uiType === 'deposit') {
+                                    $badgeLabel = 'Depósito';
+                                    $badgeClasses = 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300';
+                                } elseif ($uiType === 'withdraw') {
+                                    $badgeLabel = 'Resgate';
+                                    $badgeClasses = 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300';
+                                } elseif ($uiType === 'transfer') {
+                                    $badgeLabel = 'Transferência';
+                                    $badgeClasses = 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300';
+                                }
+                                ?>
+                                <span
+                                    class="px-3 py-1 text-xs font-semibold rounded-lg <?= $badgeClasses ?>"><?= $badgeLabel ?></span>
                         </div>
                         <div class="flex items-center justify-between mb-3">
-                            <p
-                                class="text-lg font-bold font-display <?= $transaction['type'] === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' ?>">
-                                <?= $transaction['type'] === 'income' ? '+' : '-' ?> R$
+                            <?php
+                            $amountClasses = 'text-sky-700 dark:text-sky-300';
+                            $prefix = '';
+                            if ($uiType === 'income') {
+                                $amountClasses = 'text-emerald-600 dark:text-emerald-400';
+                                $prefix = '+ ';
+                            } elseif ($uiType === 'outcome') {
+                                $amountClasses = 'text-red-600 dark:text-red-400';
+                                $prefix = '- ';
+                            }
+                            ?>
+                            <p class="text-lg font-bold font-display <?= $amountClasses ?>">
+                                <?= $prefix ?>R$
                                 <?= number_format($transaction['amount'], 2, ',', '.') ?>
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
                                 <?= date('d/m/Y', strtotime($transaction['date'])) ?>
                             </p>
                         </div>
-                        <?php if (!empty($transaction['description'])): ?>
+                        <?php if (!empty($transaction['description']) || isset($transaction['vault_id']) || !empty($transaction['ui_name'])): ?>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
-                                <?= esc($transaction['description']) ?>
+                                <?php if (!empty($transaction['description'])): ?>
+                                    <?= esc($transaction['description']) ?>
+                                <?php endif; ?>
+                                <?php
+                                $vaultLabel = null;
+                                if (isset($transaction['vault_id']) && $transaction['vault_id'] !== null) {
+                                    $vault = $vaultsById[$transaction['vault_id']] ?? null;
+                                    $vaultLabel = $vault ? ('Caixinha: ' . $vault['name']) : ('Caixinha #' . $transaction['vault_id']);
+                                } else {
+                                    $vaultLabel = 'Saldo geral';
+                                }
+                                ?>
+                                <?php if ($vaultLabel): ?>
+                                    <span class="block text-xs mt-1 text-gray-400 dark:text-gray-500">
+                                        <?= esc($vaultLabel) ?>
+                                    </span>
+                                <?php endif; ?>
                             </p>
                         <?php endif; ?>
                         <div class="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700/80">
@@ -234,6 +294,9 @@
                                 class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                                 Data</th>
                             <th scope="col"
+                                class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                                Origem/Destino</th>
+                            <th scope="col"
                                 class="px-6 py-4 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                                 Ações</th>
                         </tr>
@@ -242,34 +305,92 @@
                         <?php foreach ($transactions as $transaction): ?>
                             <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-700/30 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap">
+                                    <?php
+                                    $uiType = $transaction['ui_type'] ?? $transaction['type'] ?? '';
+                                    $isInternal = in_array($uiType, ['deposit', 'withdraw', 'transfer'], true);
+                                    ?>
                                     <div class="flex items-center gap-3">
                                         <div
-                                            class="w-8 h-8 rounded-lg bg-primary/10 dark:bg-blue-900/30 flex items-center justify-center text-primary dark:text-blue-400 text-xs font-semibold">
-                                            <?= strtoupper(substr($transaction['name'], 0, 1)) ?>
+                                            class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold bg-primary/10 dark:bg-blue-900/30 text-primary dark:text-blue-400">
+                                            <?php if ($isInternal): ?>
+                                                <i class="fa-solid fa-piggy-bank text-sm" aria-hidden="true"></i>
+                                            <?php else: ?>
+                                                <?= strtoupper(substr($transaction['name'], 0, 1)) ?>
+                                            <?php endif; ?>
                                         </div>
                                         <span
-                                            class="text-sm font-medium text-gray-900 dark:text-white"><?= esc($transaction['name']) ?></span>
+                                            class="text-sm font-medium text-gray-900 dark:text-white"><?= esc($transaction['ui_name'] ?? $transaction['name']) ?></span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <span
-                                        class="text-sm font-medium text-gray-900 dark:text-white"><?= esc($transaction['title']) ?></span>
+                                        class="text-sm font-medium text-gray-900 dark:text-white"><?= esc($transaction['ui_title'] ?? $transaction['title']) ?></span>
                                 </td>
                                 <td class="px-6 py-4">
                                     <span
                                         class="text-sm text-gray-500 dark:text-gray-400"><?= esc($transaction['description'] ?? '—') ?></span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="px-3 py-1 text-xs font-semibold rounded-lg <?= $transaction['type'] === 'income' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' ?>"><?= $transaction['type'] === 'income' ? 'Entrada' : 'Saída' ?></span>
+                                    <?php
+                                    $badgeLabel = 'Outro';
+                                    $badgeClasses = 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+                                    if ($uiType === 'income') {
+                                        $badgeLabel = 'Entrada';
+                                        $badgeClasses = 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300';
+                                    } elseif ($uiType === 'outcome') {
+                                        $badgeLabel = 'Saída';
+                                        $badgeClasses = 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+                                    } elseif ($uiType === 'deposit') {
+                                        $badgeLabel = 'Depósito';
+                                        $badgeClasses = 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300';
+                                    } elseif ($uiType === 'withdraw') {
+                                        $badgeLabel = 'Resgate';
+                                        $badgeClasses = 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300';
+                                    } elseif ($uiType === 'transfer') {
+                                        $badgeLabel = 'Transferência';
+                                        $badgeClasses = 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300';
+                                    }
+                                    ?>
+                                    <span class="px-3 py-1 text-xs font-semibold rounded-lg <?= $badgeClasses ?>">
+                                        <?= $badgeLabel ?>
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="text-sm font-bold font-display <?= $transaction['type'] === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' ?>"><?= $transaction['type'] === 'income' ? '+' : '-' ?>
-                                        R$ <?= number_format($transaction['amount'], 2, ',', '.') ?></span>
+                                    <?php
+                                    $amountClasses = 'text-sky-700 dark:text-sky-300';
+                                    $prefix = '';
+                                    if ($uiType === 'income') {
+                                        $amountClasses = 'text-emerald-600 dark:text-emerald-400';
+                                        $prefix = '+ ';
+                                    } elseif ($uiType === 'outcome') {
+                                        $amountClasses = 'text-red-600 dark:text-red-400';
+                                        $prefix = '- ';
+                                    }
+                                    ?>
+                                    <span class="text-sm font-bold font-display <?= $amountClasses ?>">
+                                        <?= $prefix ?>R<?= ' ' . number_format($transaction['amount'], 2, ',', '.') ?>
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                     <?= date('d/m/Y', strtotime($transaction['date'])) ?>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    <?php
+                                    $vaultLabel = null;
+                                    if (isset($transaction['vault_id']) && $transaction['vault_id'] !== null) {
+                                        $vault = $vaultsById[$transaction['vault_id']] ?? null;
+                                        $vaultLabel = $vault ? $vault['name'] : ('Caixinha #' . $transaction['vault_id']);
+                                    } else {
+                                        $vaultLabel = 'Saldo geral';
+                                    }
+                                    ?>
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-700 dark:text-gray-300">
+                                        <i
+                                            class="fa-solid <?= isset($transaction['vault_id']) && $transaction['vault_id'] !== null ? 'fa-piggy-bank' : 'fa-wallet' ?> mr-1.5 text-[0.7rem]"
+                                            aria-hidden="true"></i>
+                                        <?= esc($vaultLabel) ?>
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-4">

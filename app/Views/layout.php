@@ -119,6 +119,16 @@
                                 <span>Transações</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="<?= base_url('/vaults') ?>"
+                                class="sidebar-nav-link flex items-center gap-3 rounded-xl font-medium transition-all duration-200 px-4 py-3 <?= strpos(uri_string(), 'vaults') !== false ? 'bg-blue-50 dark:bg-blue-900/25 text-primary dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' ?>">
+                                <span
+                                    class="nav-icon w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg <?= strpos(uri_string(), 'vaults') !== false ? 'bg-primary/15 dark:bg-blue-500/25 text-primary dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' ?>">
+                                    <i class="fa-solid fa-piggy-bank leading-none" aria-hidden="true"></i>
+                                </span>
+                                <span>Caixinhas</span>
+                            </a>
+                        </li>
                     </ul>
                 </nav>
 

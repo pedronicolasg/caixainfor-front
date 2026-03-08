@@ -68,6 +68,26 @@
                 </div>
             </div>
 
+            <div>
+                <label for="vault_id"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Caixinha (opcional)</label>
+                <select id="vault_id" name="vault_id" class="input-base">
+                    <option value="">Saldo geral</option>
+                    <?php if (!empty($vaults ?? [])): ?>
+                        <?php foreach ($vaults as $vault): ?>
+                            <option value="<?= esc($vault['id']) ?>"
+                                <?= old('vault_id') == $vault['id'] ? 'selected' : '' ?>>
+                                <?= esc($vault['name']) ?>
+                                (R$ <?= number_format($vault['balance'] ?? 0, 2, ',', '.') ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Selecione uma caixinha para que a transação afete o saldo dela. Deixe em branco para usar o saldo geral.
+                </p>
+            </div>
+
             <div
                 class="flex flex-col sm:flex-row justify-end gap-3 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-700/80">
                 <a href="<?= base_url('/transactions') ?>"

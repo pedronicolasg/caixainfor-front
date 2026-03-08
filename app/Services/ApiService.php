@@ -174,4 +174,54 @@ class ApiService
         }
         return $this->get('transactions/summary', $params);
     }
+
+    public function getVaults(): array
+    {
+        return $this->get('vaults');
+    }
+
+    public function getVault(int $id): array
+    {
+        return $this->get("vaults/{$id}");
+    }
+
+    public function createVault(array $data): array
+    {
+        return $this->post('vaults', $data);
+    }
+
+    public function updateVault(int $id, array $data): array
+    {
+        return $this->patch("vaults/{$id}", $data);
+    }
+
+    public function depositToVault(int $id, float $amount): array
+    {
+        return $this->post("vaults/{$id}/deposit", [
+            'amount' => $amount,
+        ]);
+    }
+
+    public function withdrawFromVault(int $id, float $amount): array
+    {
+        return $this->post("vaults/{$id}/withdraw", [
+            'amount' => $amount,
+        ]);
+    }
+
+    public function transferBetweenVaults(int $fromVaultId, int $toVaultId, float $amount): array
+    {
+        return $this->post('vaults/transfer', [
+            'fromVaultId' => $fromVaultId,
+            'toVaultId' => $toVaultId,
+            'amount' => $amount,
+        ]);
+    }
+
+    public function deleteVault(int $id, string $mode): array
+    {
+        return $this->post("vault/{$id}/delete", [
+            'mode' => $mode,
+        ]);
+    }
 }

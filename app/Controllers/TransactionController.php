@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\ApiService;
+use App\Helpers\TransactionNormalizer;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -56,7 +57,7 @@ class TransactionController extends BaseController
       'order' => $order,
     ];
 
-    if ($type) {
+    if ($type && in_array($type, ['income', 'outcome'], true)) {
       $params['type'] = $type;
     }
     if ($startDate) {
@@ -71,8 +72,21 @@ class TransactionController extends BaseController
     if ($unauthorizedRedirect)
       return $unauthorizedRedirect;
 
+    $vaultsResponse = $this->apiService->getVaults();
+    $unauthorizedRedirect = $this->logoutIfUnauthorizedApiResponse($vaultsResponse);
+    if ($unauthorizedRedirect)
+      return $unauthorizedRedirect;
+    $vaults = $vaultsResponse['success'] ? ($vaultsResponse['data'] ?? []) : [];
+    $vaultsById = [];
+    foreach ($vaults as $v) {
+      $vaultsById[$v['id']] = $v;
+    }
+
+    $rawTransactions = $response['success'] ? ($response['data']['data'] ?? []) : [];
+    $normalized = TransactionNormalizer::normalize($rawTransactions, $vaultsById, $type ?: null);
+
     $data = [
-      'transactions' => $response['success'] ? ($response['data']['data'] ?? []) : [],
+      'transactions' => $normalized,
       'pagination' => $response['success'] ? ($response['data']['pagination'] ?? null) : null,
       'filters' => [
         'type' => $type,
@@ -81,6 +95,7 @@ class TransactionController extends BaseController
         'orderBy' => $orderBy,
         'order' => $order,
       ],
+      'vaultsById' => $vaultsById,
     ];
 
     return view('transactions/index', $data);
@@ -93,7 +108,15 @@ class TransactionController extends BaseController
       return $redirect;
     }
 
-    return view('transactions/create');
+    $vaultsResponse = $this->apiService->getVaults();
+    $unauthorizedRedirect = $this->logoutIfUnauthorizedApiResponse($vaultsResponse);
+    if ($unauthorizedRedirect) {
+      return $unauthorizedRedirect;
+    }
+
+    $vaults = $vaultsResponse['success'] ? ($vaultsResponse['data'] ?? []) : [];
+
+    return view('transactions/create', ['vaults' => $vaults]);
   }
 
   public function store(): RedirectResponse
@@ -114,6 +137,11 @@ class TransactionController extends BaseController
     $date = $this->request->getPost('date');
     if ($date) {
       $data['date'] = $date;
+    }
+
+    $vaultId = $this->request->getPost('vault_id');
+    if ($vaultId !== null && $vaultId !== '') {
+      $data['vault_id'] = (int) $vaultId;
     }
 
     $response = $this->apiService->createTransaction($data);
@@ -248,8 +276,9 @@ class TransactionController extends BaseController
       'orderBy' => $orderBy,
       'order' => $order,
     ];
-    if ($type)
+    if ($type && in_array($type, ['income', 'outcome'], true)) {
       $params['type'] = $type;
+    }
     if ($startDate)
       $params['startDate'] = $startDate;
     if ($endDate)
@@ -261,7 +290,20 @@ class TransactionController extends BaseController
       return [[], $unauthorizedRedirect];
     }
 
-    $transactions = $response['success'] ? ($response['data']['data'] ?? []) : [];
+    $vaultsResponse = $this->apiService->getVaults();
+    $unauthorizedRedirect = $this->logoutIfUnauthorizedApiResponse($vaultsResponse);
+    if ($unauthorizedRedirect) {
+      return [[], $unauthorizedRedirect];
+    }
+    $vaults = $vaultsResponse['success'] ? ($vaultsResponse['data'] ?? []) : [];
+    $vaultsById = [];
+    foreach ($vaults as $v) {
+      $vaultsById[$v['id']] = $v;
+    }
+
+    $raw = $response['success'] ? ($response['data']['data'] ?? []) : [];
+    $transactions = TransactionNormalizer::normalize($raw, $vaultsById, $type ?: null);
+
     return [$transactions, null];
   }
 
@@ -289,10 +331,26 @@ class TransactionController extends BaseController
 
     $row = 2;
     foreach ($transactions as $t) {
-      $sheet->setCellValue('A' . $row, $t['name'] ?? '');
-      $sheet->setCellValue('B' . $row, $t['title'] ?? '');
+      $uiType = $t['ui_type'] ?? $t['type'] ?? '';
+
+      if ($uiType === 'deposit') {
+        $typeLabel = 'Depósito';
+      } elseif ($uiType === 'withdraw') {
+        $typeLabel = 'Resgate';
+      } elseif ($uiType === 'transfer') {
+        $typeLabel = 'Transferência';
+      } elseif ($uiType === 'income') {
+        $typeLabel = 'Entrada';
+      } elseif ($uiType === 'outcome') {
+        $typeLabel = 'Saída';
+      } else {
+        $typeLabel = ucfirst((string) $uiType);
+      }
+
+      $sheet->setCellValue('A' . $row, $t['ui_name'] ?? ($t['name'] ?? ''));
+      $sheet->setCellValue('B' . $row, $t['ui_title'] ?? ($t['title'] ?? ''));
       $sheet->setCellValue('C' . $row, $t['description'] ?? '');
-      $sheet->setCellValue('D' . $row, ($t['type'] ?? '') === 'income' ? 'Entrada' : 'Saída');
+      $sheet->setCellValue('D' . $row, $typeLabel);
       $sheet->setCellValue('E' . $row, number_format((float) ($t['amount'] ?? 0), 2, ',', '.'));
       $sheet->setCellValue('F' . $row, !empty($t['date']) ? date('d/m/Y', strtotime($t['date'])) : '');
       $row++;
@@ -357,9 +415,10 @@ class TransactionController extends BaseController
     $totalOutcome = 0;
     foreach ($transactions as $t) {
       $amt = (float) ($t['amount'] ?? 0);
-      if (($t['type'] ?? '') === 'income') {
+      $uiType = $t['ui_type'] ?? $t['type'] ?? '';
+      if ($uiType === 'income') {
         $totalIncome += $amt;
-      } else {
+      } elseif ($uiType === 'outcome') {
         $totalOutcome += $amt;
       }
     }
@@ -589,16 +648,39 @@ class TransactionController extends BaseController
               </thead>
               <tbody>';
     foreach ($transactions as $t) {
-      $typeLabel = ($t['type'] ?? '') === 'income' ? 'Entrada' : 'Saída';
+      $uiType = $t['ui_type'] ?? $t['type'] ?? '';
+
+      if ($uiType === 'deposit') {
+        $typeLabel = 'Depósito';
+      } elseif ($uiType === 'withdraw') {
+        $typeLabel = 'Resgate';
+      } elseif ($uiType === 'transfer') {
+        $typeLabel = 'Transferência';
+      } elseif ($uiType === 'income') {
+        $typeLabel = 'Entrada';
+      } elseif ($uiType === 'outcome') {
+        $typeLabel = 'Saída';
+      } else {
+        $typeLabel = ucfirst((string) $uiType);
+      }
+
       $amount = (float) ($t['amount'] ?? 0);
-      $class = ($t['type'] ?? '') === 'income' ? 'amount-in' : 'amount-out';
-      $sinal = ($t['type'] ?? '') === 'income' ? '+' : '-';
+
+      $class = $uiType === 'income'
+        ? 'amount-in'
+        : ($uiType === 'outcome' ? 'amount-out' : '');
+
+      $sinal = $uiType === 'income'
+        ? '+'
+        : ($uiType === 'outcome' ? '-' : '');
       $dateStr = !empty($t['date']) ? date('d/m/Y', strtotime($t['date'])) : '—';
-      $badgeClass = ($t['type'] ?? '') === 'income' ? 'in' : 'out';
+      $badgeClass = $uiType === 'income'
+        ? 'in'
+        : ($uiType === 'outcome' ? 'out' : '');
 
       $html .= '<tr>
-            <td>' . htmlspecialchars($t['name'] ?? '') . '</td>
-            <td>' . htmlspecialchars($t['title'] ?? '') . '</td>
+            <td>' . htmlspecialchars($t['ui_name'] ?? ($t['name'] ?? '')) . '</td>
+            <td>' . htmlspecialchars($t['ui_title'] ?? ($t['title'] ?? '')) . '</td>
             <td><span class="badge ' . $badgeClass . '">' . htmlspecialchars($typeLabel) . '</span></td>
             <td class="amount-cell ' . $class . '">' . $sinal . ' R$ ' . number_format($amount, 2, ',', '.') . '</td>
             <td class="date-cell muted">' . $dateStr . '</td>
